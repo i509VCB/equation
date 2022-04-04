@@ -20,6 +20,14 @@ fn pi() {
 }
 
 #[test]
+fn inf() {
+    let mut reader = Tokenizer::from("inf");
+
+    assert_eq!(reader.next(), Some(token!(TokenKind::Chars; 3)));
+    assert_eq!(reader.next(), None);
+}
+
+#[test]
 fn log2() {
     let mut reader = Tokenizer::from("log2");
 
