@@ -199,25 +199,41 @@ pub struct Tokenizer<'a> {
 }
 
 impl Tokenizer<'_> {
-    pub fn peek(&mut self) -> Option<Token> {
-        let str = self.iter.as_str();
-        let mut chars = str.chars();
-        let (kind, mut len) = kind_with_iter(&mut chars)?;
+    pub fn peek(&self, by: usize) -> Option<Token> {
+        assert!(by > 0, "must peek by at least one token");
 
-        // Determine the length of an invalid token
-        if kind == TokenKind::Invalid {
-            loop {
-                match kind_with_iter(&mut chars) {
-                    Some((kind, _)) if kind == TokenKind::Invalid => {
-                        len += 1;
+        let mut count = by;
+        let mut str = self.iter.as_str();
+
+        loop {
+            count -= 1;
+
+            let mut chars = str.chars();
+            let (kind, mut len) = kind_with_iter(&mut chars)?;
+
+            // Determine the length of an invalid token
+            if kind == TokenKind::Invalid {
+                loop {
+                    match kind_with_iter(&mut chars) {
+                        Some((kind, _)) if kind == TokenKind::Invalid => {
+                            len += 1;
+                        }
+
+                        _ => break,
                     }
-
-                    _ => break,
                 }
             }
-        }
 
-        Some(Token { kind, len })
+            if count == 0 {
+                break Some(Token { kind, len });
+            }
+
+            // Advance the iterator to peek at the next token.
+            // TODO: Use advance_by when stabilized since we do not want to consume part of the next token.
+            //
+            // Use of "get" is intentional to avoid panicking.
+            str = chars.as_str().get((len - 1)..)?;
+        }
     }
 }
 
@@ -225,7 +241,7 @@ impl Iterator for Tokenizer<'_> {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let token = self.peek()?;
+        let token = self.peek(1)?;
         let _ = self.iter.nth(token.len - 1);
         Some(token)
     }
