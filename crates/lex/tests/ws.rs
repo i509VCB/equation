@@ -32,3 +32,5 @@ generate_test!(one_tab: "\t", token!(TokenKind::Ws; 1));
 generate_test!(two_tabs: "\t\t", token!(TokenKind::Ws; 2));
 generate_test!(one_tab_one_space: "\t ", token!(TokenKind::Ws; 2));
 generate_test!(one_tab_one_space_twice: "\t \t ", token!(TokenKind::Ws; 4));
+generate_test!(new_line: "\n", token!(TokenKind::Ws; 1));
+generate_test!(crlf_new_line: "\r\n", token!(TokenKind::Ws; 2));

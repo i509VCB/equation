@@ -45,7 +45,6 @@ generate_test!(five_point_three_four_e_five: "5.34e5", token!(TokenKind::Number(
 
 // Hexadecimal
 
-// TODO
 generate_test!(hexadecimal_zero: "0x0000", token!(TokenKind::Number(NumberKind::Hexadecimal); 6));
 generate_test!(hexadecimal_alphas: "0xabcdefABCDEF", token!(TokenKind::Number(NumberKind::Hexadecimal); 14));
 generate_test!(hexadecimal_no_value: "0x", token!(TokenKind::Number(NumberKind::Hexadecimal); 2));

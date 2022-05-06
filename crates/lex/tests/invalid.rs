@@ -1,6 +1,6 @@
 //! Invalid tokens
 
-use equation_lexer::{Token, TokenKind, Tokenizer};
+use equation_lexer::{NumberKind, Token, TokenKind, Tokenizer};
 
 macro_rules! token {
     ($kind: expr; $len: expr) => {{
@@ -23,6 +23,37 @@ macro_rules! generate_test {
             assert_eq!(parser.next(), None);
         }
     };
+}
+
+#[test]
+fn peek_zero() {
+    let tokenizer = Tokenizer::from("3.0");
+    assert_eq!(None, tokenizer.peek(0));
+}
+
+#[test]
+fn intersperse_invalid() {
+    let mut tokenizer = Tokenizer::from("3`44`55`6");
+    assert_eq!(
+        tokenizer.next(),
+        Some(token!(TokenKind::Number(NumberKind::Decimal); 1))
+    );
+    assert_eq!(tokenizer.next(), Some(token!(TokenKind::Invalid; 1)));
+    assert_eq!(
+        tokenizer.next(),
+        Some(token!(TokenKind::Number(NumberKind::Decimal); 2))
+    );
+    assert_eq!(tokenizer.next(), Some(token!(TokenKind::Invalid; 1)));
+    assert_eq!(
+        tokenizer.next(),
+        Some(token!(TokenKind::Number(NumberKind::Decimal); 2))
+    );
+    assert_eq!(tokenizer.next(), Some(token!(TokenKind::Invalid; 1)));
+    assert_eq!(
+        tokenizer.next(),
+        Some(token!(TokenKind::Number(NumberKind::Decimal); 1))
+    );
+    assert_eq!(tokenizer.next(), None);
 }
 
 generate_test!(hash: "#", token!(TokenKind::Invalid; 1));

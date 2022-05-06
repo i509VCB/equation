@@ -25,6 +25,14 @@ macro_rules! generate_test {
     };
 }
 
+#[test]
+fn empty() {
+    let mut parser = Tokenizer::from("");
+    // No input, therefore no tokens
+    assert_eq!(parser.next(), None);
+    assert_eq!(parser.next(), None);
+}
+
 generate_test!(plus: "+", token!(Kind![+]; 1));
 generate_test!(minus: "-", token!(Kind![-]; 1));
 generate_test!(multiply: "*", token!(Kind![*]; 1));

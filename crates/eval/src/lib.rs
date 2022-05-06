@@ -16,10 +16,7 @@ pub mod resolve;
 /// Returned value from evaluation.
 #[cfg_attr(feature = "fmt", derive(Debug))]
 pub enum Evaluated {
-    /// Integer
-    Int(i64),
-
-    /// Decimal number
+    /// Numeric output
     Decimal(Decimal),
 
     /// Equability
@@ -27,7 +24,7 @@ pub enum Evaluated {
 
     /// Comparison
     ///
-    /// If true, then the value was greater than, otherwise less than.
+    /// If true then the comparison was true.
     Cmp(bool),
 
     /// The value is undefined.

@@ -1,10 +1,17 @@
-#![no_std]
+//! Lexing for math equations
+//!
+//! This crate provides the [`Tokenizer`] type, used to parse a string and get the components of a math expression.
+//! Tokens are representations of the human readable expression in the input and should be converted into
+//! another form for evaluation.
+//!
+//! A [`Tokenizer`] may be constructed using it's [`From`] implementation.
 
-// TODO: Crate docs
+#![no_std]
+#![forbid(clippy::expect_used, clippy::panic, clippy::unwrap_used)]
+#![warn(missing_docs)]
+#![cfg_attr(feature = "fmt", forbid(missing_debug_implementations))]
 
 use core::str::Chars;
-
-pub use rust_decimal::Decimal;
 
 /// A kind of brace
 #[cfg_attr(feature = "fmt", derive(Debug))]
@@ -96,8 +103,6 @@ pub enum TokenKind {
     Chars,
 
     /// A number
-    ///
-    /// TODO: Possibly store data about the kind of number?
     Number(NumberKind),
 
     /// Whitespace character(s)
@@ -180,6 +185,7 @@ macro_rules! Brace {
     }};
 }
 
+/// A single token in an expression.
 #[cfg_attr(feature = "fmt", derive(Debug))]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Token {
@@ -190,6 +196,7 @@ pub struct Token {
     pub len: usize,
 }
 
+/// Tokenizer, an iterator of [`Tokens`](Token).
 #[cfg_attr(feature = "fmt", derive(Debug))]
 #[derive(Clone)]
 pub struct Tokenizer<'a> {
@@ -197,14 +204,19 @@ pub struct Tokenizer<'a> {
 }
 
 impl Tokenizer<'_> {
+    /// Peek by a specified amount for the next [`Token`].
+    ///
+    /// This does not advance the iterator and repeated calls return the same token.
+    ///
+    /// If the amount to peek by is zero, then [`None`] is returned.
     pub fn peek(&self, by: usize) -> Option<Token> {
-        assert!(by > 0, "must peek by at least one token");
-
         let mut count = by;
+        // Convert the iterator into a str so peeking does not advance the real iterator.
         let mut str = self.iter.as_str();
 
         loop {
-            count -= 1;
+            // If we peek by zero tokens, this will return None
+            count = count.checked_sub(1)?;
 
             let mut chars = str.chars();
             let (kind, mut len) = kind_with_iter(&mut chars)?;
@@ -212,6 +224,7 @@ impl Tokenizer<'_> {
             // Determine the length of an invalid token
             if kind == TokenKind::Invalid {
                 loop {
+                    // Consume the next character in the iterator until the end or invalid token.
                     match kind_with_iter(&mut chars) {
                         Some((kind, _)) if kind == TokenKind::Invalid => {
                             len += 1;
@@ -226,10 +239,8 @@ impl Tokenizer<'_> {
                 break Some(Token { kind, len });
             }
 
-            // Advance the iterator to peek at the next token.
-            // TODO: Use advance_by when stabilized since we do not want to consume part of the next token.
-            //
-            // Use of "get" is intentional to avoid panicking.
+            // Take remainder of the str borrowed from the true iterator to peek at the next token.
+            // TODO: Use advance_by when stabilized.
             str = chars.as_str().get((len - 1)..)?;
         }
     }
@@ -238,6 +249,11 @@ impl Tokenizer<'_> {
 impl Iterator for Tokenizer<'_> {
     type Item = Token;
 
+    /// Read and consume the next token.
+    ///
+    /// Subsequent calls will return the next token in the input string.
+    ///
+    /// Returns [`None`] if no more tokens are available.
     fn next(&mut self) -> Option<Self::Item> {
         let token = self.peek(1)?;
         let _ = self.iter.nth(token.len - 1);
@@ -262,6 +278,15 @@ impl<'a> From<&'a str> for Tokenizer<'a> {
     /// ```
     fn from(str: &'a str) -> Self {
         Self { iter: str.chars() }
+    }
+}
+
+impl<'a, T> From<&'a T> for Tokenizer<'a>
+where
+    T: AsRef<str>,
+{
+    fn from(str: &'a T) -> Self {
+        Self::from(str.as_ref())
     }
 }
 
@@ -301,7 +326,7 @@ fn kind_with_iter(chars: &mut Chars) -> Option<(TokenKind, usize)> {
                 (TokenKind::Number(kind), len)
             }
 
-            c if c.is_ascii_alphabetic() => (TokenKind::Chars, chrs(chars) + 1),
+            c if c.is_ascii_alphabetic() => (TokenKind::Chars, chr(chars) + 1),
             c if c.is_ascii_whitespace() => (TokenKind::Ws, ws(chars) + 1),
             _ => (TokenKind::Invalid, 1),
         },
@@ -310,7 +335,7 @@ fn kind_with_iter(chars: &mut Chars) -> Option<(TokenKind, usize)> {
     Some((kind, len))
 }
 
-fn chrs(chars: &mut Chars) -> usize {
+fn chr(chars: &mut Chars) -> usize {
     let mut len = 0;
 
     loop {
@@ -341,7 +366,7 @@ fn number(first_char: char, chars: &mut Chars) -> (NumberKind, usize) {
     if first_char == '0' {
         match chars.next() {
             Some('x') => (NumberKind::Hexadecimal, hexadecimal(chars) + 2),
-            // Validity of binary is checked later.
+            // Validity of binary is checked later in parsing process.
             Some('b') => (NumberKind::Binary, decimal_or_complex(chars) + 2),
             Some('.') | Some('0'..='9') | Some('e') | Some('E') => {
                 (NumberKind::Decimal, decimal_or_complex(chars) + 2)
