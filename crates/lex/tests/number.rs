@@ -38,10 +38,10 @@ generate_test!(four_twenty_point_sixty_nine: "420.69", token!(TokenKind::Number(
 
 // Euler's number is parsed as some characters.
 generate_test!(euler: "e", token!(TokenKind::Chars; 1));
-generate_test!(zero_e_one: "0e1", token!(TokenKind::Number(NumberKind::Complex); 3));
-generate_test!(zero_point_zero_e_one: "0.0e1", token!(TokenKind::Number(NumberKind::Complex); 5));
-generate_test!(five_e_five: "5e5", token!(TokenKind::Number(NumberKind::Complex); 3));
-generate_test!(five_point_three_four_e_five: "5.34e5", token!(TokenKind::Number(NumberKind::Complex); 6));
+generate_test!(zero_e_one: "0e1", token!(TokenKind::Number(NumberKind::Decimal); 3));
+generate_test!(zero_point_zero_e_one: "0.0e1", token!(TokenKind::Number(NumberKind::Decimal); 5));
+generate_test!(five_e_five: "5e5", token!(TokenKind::Number(NumberKind::Decimal); 3));
+generate_test!(five_point_three_four_e_five: "5.34e5", token!(TokenKind::Number(NumberKind::Decimal); 6));
 
 // Hexadecimal
 
@@ -55,9 +55,3 @@ generate_test!(binary_zero: "0b0000", token!(TokenKind::Number(NumberKind::Binar
 generate_test!(binary_no_bits: "0b", token!(TokenKind::Number(NumberKind::Binary); 2));
 generate_test!(binary_16: "0b1111", token!(TokenKind::Number(NumberKind::Binary); 6));
 generate_test!(invalid_binary: "0b5344", token!(TokenKind::Number(NumberKind::Binary); 6));
-
-// Octal
-generate_test!(octal_zero: "0o0", token!(TokenKind::Number(NumberKind::Octal); 3));
-generate_test!(octal_12_zeroes: "0o000000000000", token!(TokenKind::Number(NumberKind::Octal); 14));
-generate_test!(octal_11: "0o011", token!(TokenKind::Number(NumberKind::Octal); 5));
-generate_test!(octal_no_value: "0o", token!(TokenKind::Number(NumberKind::Octal); 2));

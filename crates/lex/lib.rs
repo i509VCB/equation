@@ -4,6 +4,8 @@
 
 use core::str::Chars;
 
+pub use rust_decimal::Decimal;
+
 /// A kind of brace
 #[cfg_attr(feature = "fmt", derive(Debug))]
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -19,25 +21,21 @@ pub enum BraceKind {
 }
 
 /// The kind of number
+///
+/// A number token is simply a way to guess if the value is likely a number. The number itself could be invalid.
 #[cfg_attr(feature = "fmt", derive(Debug))]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum NumberKind {
     /// Decimal number
     ///
-    /// A decimal number may be an integer or have decimal points.
+    /// A decimal number may be an integer, have decimal points or be a complex number.
     Decimal,
-
-    /// Hexadecimal number
-    Hexadecimal,
-
-    /// Octal number
-    Octal,
 
     /// Binary number
     Binary,
 
-    /// Complex number
-    Complex,
+    /// Hexadecimal number
+    Hexadecimal,
 }
 
 /// A kind of token
@@ -342,25 +340,23 @@ fn number(first_char: char, chars: &mut Chars) -> (NumberKind, usize) {
     // 0 first character may imply multiple types of numbers
     if first_char == '0' {
         match chars.next() {
-            Some('x') => (NumberKind::Hexadecimal, hexadecimal_number(chars) + 2),
-            Some('b') => (NumberKind::Binary, decimal_number(chars).1 + 2),
-            Some('o') => (NumberKind::Octal, decimal_number(chars).1 + 2),
-            Some('e') | Some('E') => (NumberKind::Complex, decimal_or_complex_number(chars).1 + 2),
-            Some('.') | Some('0'..='9') => {
-                let (kind, len) = decimal_or_complex_number(chars);
-                (kind, len + 2)
+            Some('x') => (NumberKind::Hexadecimal, hexadecimal(chars) + 2),
+            // Validity of binary is checked later.
+            Some('b') => (NumberKind::Binary, decimal_or_complex(chars) + 2),
+            Some('.') | Some('0'..='9') | Some('e') | Some('E') => {
+                (NumberKind::Decimal, decimal_or_complex(chars) + 2)
             }
+
             // Just a zero
             _ => (NumberKind::Decimal, 1),
         }
     } else {
-        // Otherwise assume we have a decimal or complex number
-        let (kind, len) = decimal_or_complex_number(chars);
-        (kind, len + 1)
+        // Otherwise assume a decimal or complex number.
+        (NumberKind::Decimal, decimal_or_complex(chars) + 1)
     }
 }
 
-fn hexadecimal_number(chars: &mut Chars) -> usize {
+fn hexadecimal(chars: &mut Chars) -> usize {
     let mut len = 0;
 
     loop {
@@ -374,36 +370,16 @@ fn hexadecimal_number(chars: &mut Chars) -> usize {
     }
 }
 
-fn decimal_or_complex_number(chars: &mut Chars) -> (NumberKind, usize) {
-    let mut kind = NumberKind::Decimal;
+fn decimal_or_complex(chars: &mut Chars) -> usize {
     let mut len = 0;
 
     loop {
         match chars.next() {
-            Some('.') | Some('0'..='9') => {
-                len += 1;
-            }
-            // Complex number
-            Some('e') | Some('E') => {
-                kind = NumberKind::Complex;
+            Some('.') | Some('0'..='9') | Some('e') | Some('E') => {
                 len += 1;
             }
 
-            _ => break (kind, len),
-        }
-    }
-}
-
-fn decimal_number(chars: &mut Chars) -> (NumberKind, usize) {
-    let mut len = 0;
-
-    loop {
-        match chars.next() {
-            Some('0'..='9') => {
-                len += 1;
-            }
-
-            _ => break (NumberKind::Decimal, len),
+            _ => break len,
         }
     }
 }

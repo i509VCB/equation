@@ -1,14 +1,13 @@
 [package]
-name = "equation_lexer"
+name = "equation_eval"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-path = "lib.rs"
-
 [dependencies]
+thiserror = "1.0.30"
+equation_lexer = { path = "../lex" }
 rust_decimal = { version = "1.23.1", default-features = false, features = ["maths-nopanic"] }
 
 [features]
 default = ["fmt"]
-fmt = []
+fmt = ["equation_lexer/fmt"]
