@@ -336,29 +336,11 @@ fn kind_with_iter(chars: &mut Chars) -> Option<(TokenKind, usize)> {
 }
 
 fn chr(chars: &mut Chars) -> usize {
-    let mut len = 0;
-
-    loop {
-        match chars.next() {
-            Some(c) if c.is_ascii_alphanumeric() => {
-                len += 1;
-            }
-            _ => break len,
-        }
-    }
+    chars.take_while(char::is_ascii_alphanumeric).count()
 }
 
 fn ws(chars: &mut Chars) -> usize {
-    let mut len = 0;
-
-    loop {
-        match chars.next() {
-            Some(c) if c.is_ascii_whitespace() => {
-                len += 1;
-            }
-            _ => break len,
-        }
-    }
+    chars.take_while(char::is_ascii_whitespace).count()
 }
 
 fn number(first_char: char, chars: &mut Chars) -> (NumberKind, usize) {
@@ -382,29 +364,9 @@ fn number(first_char: char, chars: &mut Chars) -> (NumberKind, usize) {
 }
 
 fn hexadecimal(chars: &mut Chars) -> usize {
-    let mut len = 0;
-
-    loop {
-        match chars.next() {
-            Some('a'..='f') | Some('A'..='F') | Some('0'..='9') => {
-                len += 1;
-            }
-
-            _ => break len,
-        }
-    }
+    chars.take_while(|c| matches!(c, 'a'..='f' | 'A'..='F' | '0'..='9')).count()
 }
 
 fn decimal_or_complex(chars: &mut Chars) -> usize {
-    let mut len = 0;
-
-    loop {
-        match chars.next() {
-            Some('.') | Some('0'..='9') | Some('e') | Some('E') => {
-                len += 1;
-            }
-
-            _ => break len,
-        }
-    }
+    chars.take_while(|c| matches!(c, '.' | '0'..='9' | 'e' | 'E')).count()
 }
